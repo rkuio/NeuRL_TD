@@ -1,0 +1,20 @@
+## NeuRL TD Writeup
+
+
+## What I Found
+
+This project turns the reward prediction error hypothesis from Schultz, Dayan & Montague (1997) into a temporal difference (TD) simulation. The paper's central claim is that dopamine neurons don't just signal reward. They signal a prediction error, the mismatch between the reward an animal expects and the reward it actually receives. This idea is represented through the TD error equation, δ(t) = r(t) + V(t+1) − V(t), where V represents the animal's running prediction of future reward at each moment in time, r is the reward actually received at that moment, and δ is the surprising result. It is positive when reward is greater than expectation, zero when it matches, and negative when reward falls short.
+
+My model reproduces all three firing patterns that the data reports. Before training, the TD error spiked only at the moment of reward delivery, matching the paper's trial recordings, since the model has no basis yet to predict reward in advance. After training, the spike shifts to the cue and the response at reward time drops toward zero, closely matching the paper's finding that dopamine responses transfer from the reward itself to its cue. The omit condition shows the clearest match to the paper across every version of my model I tested. It shows a marked dip below baseline exactly at the expected reward time.
+
+## Where My Version Differed, and What Caused It
+
+One divergence appeared in my initial after learning results. My trace retained a small increase near the expected reward timestep. I traced this to randoms, a random number generator I used to shift reward delivery by plus or minus one timestep on each trial. To confirm whether this randomized reward timing was actually the cause, I ran the model again with the randomization removed and with parameters matched more closely to the paper's own simulation. With the randomization off, the after learning trace converged to an almost all zero response everywhere except a sharp spike at the cue (0.986 at t=0, decaying to under 1e-14 by t=19), and the omission trace showed a clean dip (-1.0 exactly at the expected reward timestep, 0 elsewhere). This confirmed the divergence wasn't a flaw in the update rule itself but because v being a table of independent per timestep values. When reward timing is fixed, each index only ever learns from one consistent outcome. When randoms shifts timing across trials, neighboring indices get updated from inconsistent evidence, and that disagreement shows up as a bump instead of a flat response.
+
+## What I Tried That Didn't Work
+
+I ran into a convergence issue while testing a longer cue reward delay (24 timesteps, reward at timestep 23). 200 training repetitions weren't enough for the model to converge. last_trace[0] only reached about 0.94 instead of 1.0. This happens because v[t] only ever updates using v[t+1], the very next timestep, so information about an upcoming reward can only travel backward through v one timestep per training repetition. The longer the delay, the more repetitions it takes just to propagate the signal back, let alone let it converge. Increasing training to 1000 repetitions fixed it. 
+
+## One Thing I'd Try Next
+
+I'd give v a better representation of each timestep instead of one independent value per index, closer to how the paper's own model represents a cue as a whole vector of weights covering many possible future delays rather than a single value function. This should make the model have less small spikes and cause the data to have more curves than fixed values at a timepoint. Since nearby timesteps would share learning instead of updating independently off inconsistent evidence, the data would be more connected. 
