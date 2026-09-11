@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 trials = 12
 time_reward = 8 # less than trials
-size_reward = 1.0 # if it is there or not
+size_reward = 1.0 # if reward is present
 
 learning_rate = 0.15
 
