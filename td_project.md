@@ -10,3 +10,7 @@ One divergence appeared in my initial after learning results. My trace retained 
 I ran into a convergence issue while testing a longer cue reward delay (24 timesteps, reward at timestep 23). 200 training repetitions weren't enough for the model to converge. last_trace[0] only reached about 0.94 instead of 1.0. This happens because v[t] only ever updates using v[t+1], the very next timestep, so information about an upcoming reward can only travel backward through v one timestep per training repetition. The longer the delay, the more repetitions it takes just to propagate the signal back, let alone let it converge. Increasing training to 1000 repetitions fixed it. 
 
 I'd give v a better representation of each timestep instead of one independent value per index, closer to how the paper's own model represents a cue as a whole vector of weights covering many possible future delays rather than a single value function. This should make the model have less small spikes and cause the data to have more curves than fixed values at a timepoint. Since nearby timesteps would share learning instead of updating independently off inconsistent evidence, the data would be more connected. 
+
+
+AI Use: 
+I used Claude as a throughout this project to help organize and structure my code, and to talk through my reasoning as I worked out my approach.
